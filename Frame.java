@@ -291,8 +291,8 @@ public class Frame extends JFrame implements ActionListener{
         }
         // paint points from chaos game
         for (int point = 0; point < chaosPoints.size(); point++) {
-            // most recent point is painted red
-            if (point == chaosPoints.size()-1) {
+            // most recent point is painted red during animation
+            if (point == chaosPoints.size()-1 && isAnimating) {
                 g2d.setPaint(Color.red);
                 g2d.fillOval(chaosPoints.get(point).x, chaosPoints.get(point).y, 10, 10);
             } else {
