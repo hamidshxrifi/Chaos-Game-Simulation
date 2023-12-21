@@ -10,30 +10,34 @@ import java.util.Random;
 public class Frame extends JFrame implements ActionListener{
 
     Shape shape;
-    boolean selectedFinal;
     Point finalPoint;
-    public int iterIndex = 0;
-    int count = 0;
     Timer timer;
-    boolean isAnimating = false;
-    public double rValue = 0.50;
     JTextField rValueField;
-    public int moveTo = 0;
-    boolean newVertex = false;
     JLabel iterText;
     JLabel iterLimitText;
     JLabel pointSizeText;
     JLabel algoText;
+    boolean selectedFinal;
+    boolean isAnimating;
+    boolean newVertex;
+    double rValue;
+    int iterIndex;
+    int moveTo;
+    int count;
     int pointIndex;
     int[] pointSizeArr = {1,2,3,4,5};
     int[] numOfIterations = {1000,2000,3000,4000,5000,6000,7000,8000,9000,10000};
 
-
     Frame(){
-        pointIndex = 2;
+        isAnimating = false;
+        newVertex = false;
+        rValue = 0.50;
+        iterIndex = 0;
+        moveTo = 0;
+        count = 0;
+        pointIndex = 1;
         selectedFinal = false;
-        timer = new Timer(1,this);
-        rValueField = createTextField(575,25,35,30, "0.50");
+
         iterText = new JLabel();
         iterText.setBounds(680,740,200,25);
         iterText.setVisible(false);
@@ -47,6 +51,7 @@ public class Frame extends JFrame implements ActionListener{
         algoText = new JLabel("New Vertex Algorithm = " + newVertex);
         algoText.setBounds(340,740,200,25);
 
+        rValueField = createTextField(575,25,35,30, "0.50");
         JButton algoButton = createButton(85,75,152,30,"Set Vertex Algorithm");
         algoButton.setToolTipText("If set to true, each iteration chooses a different vertex from the last iteration");
         algoButton.addActionListener(new ActionListener() {
@@ -54,6 +59,7 @@ public class Frame extends JFrame implements ActionListener{
             public void actionPerformed(ActionEvent e) {
                 if (!isAnimating) {
                     newVertex = !newVertex;
+                    // default rValue when clicked
                     rValueField.setText("0.50");
                     rValue = 0.50;
                     algoText.setText("New Vertex Algorithm = " + newVertex);
@@ -89,14 +95,15 @@ public class Frame extends JFrame implements ActionListener{
             @Override
             public void actionPerformed(ActionEvent e) {
                 shape.removeVerticesAndPoints();
-                selectedFinal=false;
-                count=0;
                 iterText.setVisible(false);
+                selectedFinal=false;
                 isAnimating = false;
+                count=0;
                 repaint();
             }
         });
 
+        // clears shape then adds triangle
         JButton triangleButton = createButton(175,25,125,30, "Create Triangle");
         triangleButton.addActionListener(new ActionListener() {
             @Override
@@ -104,15 +111,15 @@ public class Frame extends JFrame implements ActionListener{
                 if (!isAnimating) {
                     shape.removeVerticesAndPoints();
                     iterText.setVisible(false);
+                    selectedFinal = false;
                     shape.addVertex(new Point(400,175));
                     shape.addVertex(new Point(100,725));
                     shape.addVertex(new Point(700,725));
-                    selectedFinal = false;
                     repaint();
                 }
             }
         });
-
+        // clears shape then adds square
         JButton squareButton = createButton(325,25,125,30, "Create Square");
         squareButton.addActionListener(new ActionListener() {
             @Override
@@ -120,16 +127,18 @@ public class Frame extends JFrame implements ActionListener{
                 if (!isAnimating) {
                     shape.removeVerticesAndPoints();
                     iterText.setVisible(false);
+                    selectedFinal = false;
                     shape.addVertex(new Point(50,150));
                     shape.addVertex(new Point(750,150));
                     shape.addVertex(new Point(50,750));
                     shape.addVertex(new Point(750,750));
-                    selectedFinal = false;
                     repaint();
                 }
             }
         });
 
+        // will set the r value to be the value entered in the JTextField
+        // must be between 0.01 and 0.99
         JButton setRButton = createButton(475,25,100,29, "Set R value");
         setRButton.setToolTipText("Set the jump distance from point A to point B; Default = 0.5");
         setRButton.addActionListener(new ActionListener() {
@@ -137,6 +146,7 @@ public class Frame extends JFrame implements ActionListener{
             public void actionPerformed(ActionEvent e) {
                 if(e.getSource()==setRButton && !isAnimating) {
                     double oldR = rValue;
+                    // formatting error will set rValue back to its original value
                     try {
                         rValue = Double.parseDouble(rValueField.getText());
                     }
@@ -151,6 +161,7 @@ public class Frame extends JFrame implements ActionListener{
             }
         });
 
+        // rValue will produce optimal packing at n/n+3, n being the number of vertices
         JButton optimizeButton = createButton(635,25,125,30, "Optimize");
         optimizeButton.setToolTipText("Set R value to produce fractal with optimal packing");
         optimizeButton.addActionListener(new ActionListener() {
@@ -171,40 +182,47 @@ public class Frame extends JFrame implements ActionListener{
         this.setResizable(false);
         this.setSize(800,800);
         this.setVisible(true);
-        this.add(rValueField);
         this.add(iterText);
+        this.add(iterLimitText);
+        this.add(pointSizeText);
+        this.add(algoText);
+        this.add(rValueField);
         this.add(resetButton);
         this.add(triangleButton);
         this.add(squareButton);
         this.add(setRButton);
         this.add(optimizeButton);
-        //this.add(newV);
-        this.add(iterLimitText);
-        this.add(pointSizeText);
         this.add(algoButton);
         this.add(paintSizeButton);
         this.add(iterLimitButton);
-        this.add(algoText);
+
+        // 1ms delay between frames of animation
+        timer = new Timer(1,this);
         timer.start();
 
+        // processes left/right mouse click buttons
         this.addMouseListener(new MouseListener() {
             @Override
             public void mouseClicked(MouseEvent e) {
+                // places shape vertex on screen with left click
                 if(e.getY()>125 && e.getButton() == MouseEvent.BUTTON1 && !selectedFinal) {
                     shape.addVertex(new Point(e.getX(), e.getY()));
                     repaint();
                 }
+                // places chaos point on screen with right click
                 else if(e.getY()>125 && e.getButton() == MouseEvent.BUTTON3 && !selectedFinal) {
                     int v = shape.getNumberOfVertices();
+                    // shape must have 3 vertices, otherwise it will result in point (1 vertex) or line (2 vertex)
                     if (v>2) {
                         selectedFinal = true;
+                        isAnimating = true;
                         finalPoint = new Point(e.getX(),e.getY());
                         shape.addPoint(finalPoint);
                         iterText.setVisible(true);
                         repaint();
-                        isAnimating = true;
                     }
                 }
+                // skip to end result of chaos game
                 else if(e.getButton()== MouseEvent.BUTTON3 && isAnimating) {
                     isAnimating = false;
                     finishAnimation();
@@ -243,10 +261,13 @@ public class Frame extends JFrame implements ActionListener{
         return button;
     }
 
+    // will allow user to pass in either an empty shape, or a predefined custom shape
     public void setShape(Shape x) {
         shape = x;
     }
 
+    // allows for double buffering
+    // prevents flickering between repaint()
     public void paint(Graphics g) {
         Image dbImage = createImage(getWidth(), getHeight());
         Graphics dbg = dbImage.getGraphics();
@@ -258,14 +279,19 @@ public class Frame extends JFrame implements ActionListener{
         super.paint(g);
         Graphics2D g2d = (Graphics2D) g;
         Color darkGreen = new Color(0,153,0);
+        // enables antialiasing
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         ArrayList<Point> vertices = shape.getVertices();
         ArrayList<Point> chaosPoints = shape.getPoints();
+        // paints to screen the points in the two arrays
+        // paint vertices of the shape
         for (Point vertex : vertices) {
             g2d.setPaint(darkGreen);
             g2d.fillOval(vertex.x, vertex.y, 5, 5);
         }
+        // paint points from chaos game
         for (int point = 0; point < chaosPoints.size(); point++) {
+            // most recent point is painted red
             if (point == chaosPoints.size()-1) {
                 g2d.setPaint(Color.red);
                 g2d.fillOval(chaosPoints.get(point).x, chaosPoints.get(point).y, 10, 10);
@@ -276,16 +302,19 @@ public class Frame extends JFrame implements ActionListener{
         }
     }
 
+    // completes simulation to produce final shape
     public void finishAnimation() {
-        int numOfVert = shape.getNumberOfVertices();
         Random rand = new Random();
         Point vertex;
         Point lastPoint;
         Point nextPoint;
+        int numOfVert = shape.getNumberOfVertices();
         int oldMoveTo;
         int newX;
         int newY;
+        // calculates the next point using the last point and the vertex we want to move to
         do {
+            // if true, sets moveTo to a different vertex from the last iteration
             if (newVertex) {
                 oldMoveTo = moveTo;
                 do {
@@ -300,7 +329,7 @@ public class Frame extends JFrame implements ActionListener{
             newX = (int) (lastPoint.x + rValue * (vertex.x - lastPoint.x));
             newY = (int) (lastPoint.y + rValue * (vertex.y - lastPoint.y));
             nextPoint = new Point(newX, newY);
-
+            // append new point to point array, and will be used in next iteration
             shape.addPoint(nextPoint);
             count++;
             iterText.setText("Iteration " + count);
@@ -312,15 +341,18 @@ public class Frame extends JFrame implements ActionListener{
         count=0;
     }
 
+    // simulates the chaos game
+    // achieves same outcome as finishAnimation(), but is instead called every 1ms to show the game being played.
     @Override
     public void actionPerformed(ActionEvent e) {
 
+        // calculates the next point
         if(isAnimating) {
-            int numOfVert = shape.getNumberOfVertices();
             Random rand = new Random();
             Point vertex;
             Point lastPoint;
             Point nextPoint;
+            int numOfVert = shape.getNumberOfVertices();
             int oldMoveTo;
             int newX;
             int newY;
